@@ -187,9 +187,9 @@ The deposition paths are grouped by printing height Z.
 
 For each layer, the outer dimensions are measured and converted to a half-width profile:
 
-\[
-a(z)=\frac{X_{max}-X_{min}}{2}
-\]
+```math
+a(z)=\frac{X_{\max}(z)-X_{\min}(z)}{2}
+```
 
 This creates a geometric representation of the preserved part:
 
@@ -241,16 +241,20 @@ The extracted profiles are available in:
 
 The damaged profile is compared against the Pawn, Bishop, and Queen reference profiles over the preserved height range.
 
-The main comparison metric is Root Mean Square Error:
+The main comparison metric is Root Mean Square Error (RMSE):
 
-\[
-RMSE=
+```math
+RMSE =
 \sqrt{
 \frac{1}{N}
 \sum_{i=1}^{N}
-(a_{damaged}(z_i)-a_{reference}(z_i))^2
+\left(
+a_{\mathrm{damaged}}(z_i)
+-
+a_{\mathrm{reference}}(z_i)
+\right)^2
 }
-\]
+```
 
 ### Geometry Results
 
@@ -307,16 +311,31 @@ The remaining material deposition in the damaged G-code is approximately:
 
 The missing filament budget is therefore:
 
-\[
-F_{missing}
+```math
+F_{\mathrm{missing}}
 =
-4290.7-3198.14
-\]
+F_{\mathrm{metadata}}
+-
+F_{\mathrm{existing}}
+```
 
-\[
-F_{missing}
-\approx1092.56\text{ mm}
-\]
+Using the measured values:
+
+```math
+F_{\mathrm{missing}}
+=
+4290.7
+-
+3198.14
+```
+
+Therefore:
+
+```math
+F_{\mathrm{missing}}
+\approx
+1092.56\ \mathrm{mm}
+```
 
 The complete upper geometry of each candidate was then used to estimate how much additional filament would be required.
 
@@ -353,17 +372,47 @@ Geometry alone slightly favors the **Bishop**.
 
 However, only the lower **23.95 mm** of the original model is preserved, where the Bishop and Queen have similar body profiles.
 
-The missing-filament analysis provides stronger separation between the candidates:
+The missing-filament analysis provides stronger separation between the candidates.
 
-```text
-Observed missing filament : ~1092.56 mm
+Observed missing filament:
 
-Queen prediction          : ~1124 mm
-Bishop prediction         : ~825 mm
-Pawn prediction           : ~528 mm
+```math
+F_{\mathrm{missing}}
+\approx
+1092.56\ \mathrm{mm}
 ```
 
-The Queen differs from the observed missing-filament budget by only about **2.9%**.
+Queen prediction:
+
+```math
+F_{\mathrm{Queen}}
+\approx
+1124\ \mathrm{mm}
+```
+
+Bishop prediction:
+
+```math
+F_{\mathrm{Bishop}}
+\approx
+825\ \mathrm{mm}
+```
+
+Pawn prediction:
+
+```math
+F_{\mathrm{Pawn}}
+\approx
+528\ \mathrm{mm}
+```
+
+The Queen differs from the observed missing-filament budget by only about:
+
+```math
+\mathrm{Error}_{\mathrm{Queen}}
+\approx
+2.9\%
+```
 
 Therefore, when both geometry and filament evidence are considered:
 
