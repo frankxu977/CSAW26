@@ -240,10 +240,7 @@ The decoded text provides the password clue for:
 ```text
 Original STL.7z
 ```
-
-Because archive passwords are case-sensitive, the exact capitalization and spacing still need to match the archive password.
-
-## Key Idea
+Key idea
 
 The important clue was the wording about **Caesar** and secret messages.
 
