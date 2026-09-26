@@ -1,197 +1,274 @@
-# Damaged G-code QR Recovery
+# Challenge 2 — Gear CAD Recovery
 
-This project recovers a hidden QR code from a damaged 3D-printing G-code file.
+## Overview
 
-## 1. Initial Inspection
+The goal of Challenge 2 was to recover the hidden CAD models from four provided images.
 
-The damaged G-code was first inspected using **UltiMaker Cura** and **CloudCompare** to visualize the 3D structure and locate the hidden pattern.
+Although the four images looked similar at first, they required four different recovery methods:
 
-[![Step 1](Chess_package_2/figures/1.png)](Chess_package_2/figures/1.png)
-
-[![Step 2](Chess_package_2/figures/2.png)](Chess_package_2/figures/2.png)
-
-[![Step 3](Chess_package_2/figures/3.png)](Chess_package_2/figures/3.png)
-
----
-
-## 2. Convert G-code to XYZ
-
-[`001_gcode_to_xyz.py`](Chess_package_2/src/001_gcode_to_xyz.py)
-
-The script extracts extrusion coordinates from:
-
-```text
-Chess_package_2/src/Raw/damaged_chess.gcode
-```
-
-and generates:
-
-```text
-Chess_package_2/data/001_damaged_chess.xyz
-```
+1. **Image 0119** — Recover a direct Google Drive CAD link from the JPG data.
+2. **Image 0338** — Recover a manufacturer link and download the CAD model from McMaster-Carr.
+3. **Image 1139** — Solve an engineering riddle about the gear pressure angle.
+4. **Image 2161** — Decode a Caesar cipher to obtain the archive password.
 
 ---
 
-## 3. Analyze the 3D Geometry
+# 1. Image 0119 — Direct CAD Retrieval
 
-[`002_angle_scan.py`](Chess_package_2/src/002_angle_scan.py)
+## Method
 
-The XYZ point cloud is projected from different viewing angles to reveal the hidden QR structure.
+For Image 0119, I first opened `Ball_rec0119.jpg` in **HxD Hex Editor** instead of only viewing the image normally.
 
-### 3D View
+Because useful information can be stored inside a JPG file without appearing in the visible image, I searched the raw file data for:
 
-[![3D Model](Chess_package_2/figures/3D.png)](Chess_package_2/figures/3D.png)
+```text
+https://drive.google.com
+```
+
+A readable Google Drive URL appeared starting at:
+
+```text
+Decimal offset:     2152
+Hexadecimal offset: 0x868
+```
+
+The URL was stored directly as readable text inside the JPG data.
+
+After recovering the full URL and opening it in a browser, it led directly to the CAD model.
+
+## Key Idea
+
+The JPG itself was being used as a container for hidden text.
+
+The CAD model did not need to be reconstructed manually, and there was no password or cipher to solve. The important step was inspecting the binary contents of the image rather than only looking at the image visually.
+
+## Result
+
+**CAD model recovered directly from the hidden Google Drive link.**
+
+This was the shortest and most direct recovery method of the four.
 
 ---
 
-## 4. Calibrate the QR Grid
+# 2. Image 0338 — Manufacturer CAD Download
 
-[`003_calibrate_qr_grid.py`](Chess_package_2/src/003_calibrate_qr_grid.py)
+## Method
 
-The detected geometry is mapped onto a standard Version 1 QR grid with:
+Image 0338 was more complicated because it contained **two different hidden URLs**.
+
+I opened `Ball_rec0338.jpg` in HxD and inspected the file contents.
+
+### Google Drive Link
+
+The first link was a Google Drive URL.
+
+It appeared as readable text around:
 
 ```text
-21 × 21 modules
+Decimal offset:     2152
+Hexadecimal offset: 0x868
 ```
 
-Input:
+The Google Drive route provided:
 
 ```text
-Chess_package_2/data/loop_centers.xyz
+Downloaded Gear_2.7z
 ```
 
-### Reconstructed QR Pattern
+which contained:
 
-[![Original QR](Chess_package_2/figures/qr_code_original.png)](Chess_package_2/figures/qr_code_original.png)
+```text
+Downloaded Gear.zip
+```
+
+However, extracting this archive did not give me a usable model during the investigation.
+
+Instead of continuing to attack the archive, I inspected the JPG for other clues.
+
+### McMaster-Carr Link
+
+A second URL appeared later in the JPG at:
+
+```text
+Decimal offset:     4266
+Hexadecimal offset: 0x10AA
+```
+
+This link was different because it was encoded using **UTF-16LE**.
+
+In a normal single-byte hex view, UTF-16LE text looks similar to:
+
+```text
+h.t.t.p...
+```
+
+because many characters have a `00` byte between them.
+
+After decoding the text, the URL pointed to a McMaster-Carr product page.
+
+The important information recovered from the link was the part number:
+
+```text
+2664N443
+```
+
+McMaster-Carr provides downloadable CAD models for many mechanical components. I searched for this part and used the product page's **CAD download** option to obtain the model directly from the manufacturer.
+
+## Key Idea
+
+Unlike Image 0119, the first recovered link was not the most useful solution.
+
+The important step was realizing that the JPG contained another hidden link encoded differently.
+
+Instead of trying to repair or crack the nested archive, the manufacturer part number provided a much easier and more reliable path to the CAD model.
+
+## Result
+
+**CAD model recovered from the McMaster-Carr product page for part `2664N443`.**
+
+The supplied Google Drive archive was not required as the final working source.
 
 ---
 
-## 5. Repair the QR Code
+# 3. Image 1139 — Pressure-Angle Riddle
 
-[`004_repair_qr.py`](Chess_package_2/src/004_repair_qr.py)
+## Method
 
-The damaged QR data is recovered using:
+The recovery path for Image 1139 was different from the first two.
 
-- QR format analysis
-- Mask detection
-- Zig-zag data extraction
-- Reed-Solomon error correction
-- Additional damaged-bit recovery
-
-Recovered parameters:
+The linked Google Drive folder contained:
 
 ```text
-Error Correction Level: M
-Mask Pattern: 2
-Extra Modified Bit: 109
-QR Module Position: (14, 11)
+Original SLDPRT.7z
+Riddle.txt
 ```
 
-Recovered QR content:
+Instead of directly providing the archive password, `Riddle.txt` asked:
 
 ```text
-is.gd/19hak3
+What is the pressure angle of this gear in degrees?
+```
+
+This meant the password clue was based on **gear engineering knowledge** rather than hidden binary text.
+
+The pressure angle is an important parameter in involute gear geometry. A very common standard pressure angle for modern gears is:
+
+```text
+20 degrees
+```
+
+Using this value solved the riddle.
+
+## Key Idea
+
+This route required interpreting an engineering clue.
+
+The solution was not another URL hidden in the file. The challenge expected the user to understand or identify a standard gear parameter and use that value as the password clue.
+
+## Result
+
+```text
+Pressure angle = 20 degrees
+```
+
+The riddle therefore resolves to:
+
+```text
+20
+```
+
+This value provides the password clue for accessing the original SolidWorks part archive.
+
+---
+
+# 4. Image 2161 — Caesar Cipher
+
+## Method
+
+Image 2161 used a cryptography-based clue.
+
+The associated Google Drive folder contained:
+
+```text
+Original STL.7z
+```
+
+and the clue:
+
+```text
+Cesar had a pass time of writing secret messages to his generals
+```
+
+followed by:
+
+```text
+Ybsbidbxo
+```
+
+The reference to **Caesar** and secret military messages strongly suggested a **Caesar cipher**.
+
+A Caesar cipher shifts every letter by a fixed number of positions in the alphabet.
+
+For this message, shifting each ciphertext letter **forward by 3 positions** gives:
+
+```text
+Ciphertext: Y b s b i d b x o
+             ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
+Plaintext:  B e v e l g e a r
+```
+
+Therefore:
+
+```text
+Ybsbidbxo
+```
+
+decodes to:
+
+```text
+Bevelgear
+```
+
+or conceptually:
+
+```text
+Bevel gear
+```
+
+The decoded text provides the password clue for:
+
+```text
+Original STL.7z
+```
+Key idea
+
+The important clue was the wording about **Caesar** and secret messages.
+
+Instead of interpreting "Cesar" as a Roman-number clue, I treated it as a reference to the Caesar substitution cipher.
+
+Applying a shift of three recovered a meaningful mechanical term, confirming that the decoding method was correct.
+
+## Result
+
+```text
+Ybsbidbxo → Bevelgear
+```
+
+The recovered password clue is:
+
+```text
+Bevelgear
 ```
 
 ---
 
-## 6. Generate the Final QR Code
+# Comparison of the Four Recovery Methods
 
-[`005_make_recover.py`](Chess_package_2/src/005_make_recover.py)
-
-The recovered payload is used to generate a clean and scannable QR code.
-
-### Final Recovered QR
-
-[![Recovered QR](Chess_package_2/figures/recovered_qr.png)](Chess_package_2/figures/recovered_qr.png)
-
-Recovered content:
-
-```text
-is.gd/19hak3
-```
+| Image | Main Technique | Hidden Information | Final Recovery Method |
+|------|----------------|-------------------|----------------------|
+| **0119** | Hex inspection | Google Drive URL | Download CAD directly |
+| **0338** | Hex inspection + UTF-16LE | McMaster-Carr product link | Download manufacturer CAD |
+| **1139** | Gear engineering knowledge | Pressure-angle riddle | Solve with **20°** |
+| **2161** | Cryptography | `Ybsbidbxo` | Caesar shift → `Bevelgear` |
 
 ---
-
-## Project Structure
-
-```text
-Chess_package_2/
-│
-├── data/
-│   ├── 001_damaged_chess.xyz
-│   └── loop_centers.xyz
-│
-├── figures/
-│   ├── 1.png
-│   ├── 2.png
-│   ├── 3.png
-│   ├── 3D.png
-│   ├── qr_code_original.png
-│   └── recovered_qr.png
-│
-├── src/
-│   ├── Raw/
-│   │   ├── chess_pieces.png
-│   │   ├── damaged_chess.gcode
-│   │   └── image_info.txt
-│   │
-│   ├── 001_gcode_to_xyz.py
-│   ├── 002_angle_scan.py
-│   ├── 003_calibrate_qr_grid.py
-│   ├── 004_repair_qr.py
-│   └── 005_make_recover.py
-│
-├── LICENSE
-└── README.md
-```
-
----
-
-## Workflow
-
-```text
-damaged_chess.gcode
-        ↓
-001_gcode_to_xyz.py
-        ↓
-001_damaged_chess.xyz
-        ↓
-002_angle_scan.py
-        ↓
-3D / projection analysis
-        ↓
-loop_centers.xyz
-        ↓
-003_calibrate_qr_grid.py
-        ↓
-damaged 21 × 21 QR matrix
-        ↓
-004_repair_qr.py
-        ↓
-is.gd/19hak3
-        ↓
-005_make_recover.py
-        ↓
-recovered_qr.png
-```
-
----
-
-## Requirements
-
-```bash
-python -m pip install numpy pillow opencv-python reedsolo "qrcode[pil]"
-```
-
----
-
-## Run
-
-```bash
-python Chess_package_2/src/001_gcode_to_xyz.py
-python Chess_package_2/src/002_angle_scan.py
-python Chess_package_2/src/003_calibrate_qr_grid.py
-python Chess_package_2/src/004_repair_qr.py
-python Chess_package_2/src/005_make_recover.py
-```
